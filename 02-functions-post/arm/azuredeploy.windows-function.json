@@ -1,0 +1,88 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "prefix": {
+            "type": "string",
+            "defaultValue": "amblog"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "function-app-name": "[concat(parameters('prefix'), '-win-function-app')]",
+        "storage-account-name": "[concat(parameters('prefix'), 'winstorageaccount')]",
+        "function-app-plan": "[concat(parameters('prefix'), '-app-plan-win')]"
+    },
+    "resources": [
+        {
+            "name": "[variables('function-app-plan')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "tier": "Dynamic",
+                "name": "Y1"
+            },
+            "tags": {
+                "displayName": "[variables('function-app-plan')]"
+            },
+            "properties": {
+                "computeMode": "Dynamic"
+            }
+        },
+        {
+            "name": "[variables('storage-account-name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "tags": {
+                "displayName": "[variables('storage-account-name')]"
+            },
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            }
+        },
+        {
+            "name": "[variables('function-app-name')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storage-account-name'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('function-app-plan'))]"
+            ],
+            "properties": {
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-account-name'), ';AccountKey=', listKeys(variables('storage-account-name'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-account-name'), ';AccountKey=', listKeys(variables('storage-account-name'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage-account-name'), ';AccountKey=', listKeys(variables('storage-account-name'),'2015-05-01-preview').key1)]"
+                        }
+                    ],
+                    "use32BitWorkerProcess": false
+                },
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('function-app-plan'))]"
+            }
+        }
+    ],
+    "outputs": {}
+}
