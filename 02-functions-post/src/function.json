@@ -1,0 +1,26 @@
+{
+  "bindings": [
+    {
+      "name": "req",
+      "route": "v1/analytics/{userid}",
+      "authLevel": "function",
+      "methods": [
+        "post"
+      ],
+      "direction": "in",
+      "type": "httpTrigger"
+    },
+    {
+      "name": "$return",
+      "type": "http",
+      "direction": "out"
+    },
+    {
+      "name": "outputBlob",
+      "path": "useranalyticsstore/{userid}/{rand-guid}.json",
+      "connection": "AzureWebJobsDashboard",
+      "direction": "out",
+      "type": "blob"
+    }
+  ]
+}
