@@ -1,0 +1,17 @@
+<p>attendees-display works!</p>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Tenant</th>
+        </tr>
+    </thead>
+    <tbody *ngFor="let attendee of dataObservable | async">
+        <tr>
+            <td>{{ attendee.id }}</td>
+            <td>{{ attendee.firstName + " " + attendee.lastName }}</td>
+            <td>{{ attendee.tenantId }}</td>
+        </tr>
+    </tbody>
+</table>
