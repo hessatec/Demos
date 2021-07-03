@@ -1,0 +1,96 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "prefix": {
+            "type": "string"
+        },
+        "adminLogin": {
+            "type": "string",
+            "defaultValue": "demouser"
+        },
+        "adminPw": {
+            "type": "securestring",
+            "defaultValue": "Password.1!!"
+        },
+        "region": {
+            "type": "string",
+            "allowedValues": [ "westcentralus" ]
+        }
+    },
+    "functions": [],
+    "variables": {
+        "sql-server-name": "[concat(parameters('prefix'), '-sql-server')]",
+        "sql-db-name": "[concat(parameters('prefix'), '-sql-db')]",
+        "storage-acct-name": "[concat(parameters('prefix'), 'storageacct')]",
+        "container-name": "[concat(parameters('prefix'), 'ledgerstorage')]"
+    },
+    "resources": [
+        {
+            "name": "[variables('sql-server-name')]",
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2014-04-01",
+            "location": "[parameters('region')]",
+            "tags": {
+                "displayName": "[variables('sql-server-name')]"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('adminLogin')]",
+                "administratorLoginPassword": "[parameters('adminPw')]"
+            },
+            "resources": [
+                {
+                    "type": "firewallRules",
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('sql-server-name'))]"
+                    ],
+                    "location": "[parameters('region')]",
+                    "name": "AllowAllIps",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "255.255.255.255"
+                    }
+                },
+                {
+                    "name": "[variables('sql-db-name')]",
+                    "type": "databases",
+                    "apiVersion": "2020-08-01-preview",
+                    "location": "[parameters('region')]",
+                    "sku": {
+                        "name": "S0"
+                    },
+                    "properties": {
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', variables('sql-server-name'))]"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "[variables('storage-acct-name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "tags": {
+                "displayName": "[variables('storage-acct-name')]"
+            },
+            "location": "[parameters('region')]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "resources": [
+                {
+                    "type": "containers",
+                    "apiVersion": "2021-01-01",
+                    "name": "[variables('container-name')]",
+                    "properties": {
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {}
+}
